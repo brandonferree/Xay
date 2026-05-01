@@ -148,4 +148,10 @@ export const PROFILES = {
     top_holdings: [],
     other_label: "Gold Bullion"
   },
+  MONEY_MARKET: {
+    sectors: { "Cash": 1.0 },
+    countries: { "United States": 1.00 },
+    top_holdings: [],
+    other_label: "Money Market / Cash"
+  },
 };
