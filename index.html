@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio X-Ray — Holdings Analysis</title>
+<meta name="description" content="See your true portfolio exposure across all accounts. Look-through to underlying holdings, sector and country breakdown, hidden overlap detection, fee analysis. Your data stays in your browser.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800&family=Geist:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/main.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="brand">PORTFOLIO <span class="accent">X-Ray</span></div>
+  <div style="display: flex; align-items: center;">
+    <div class="header-meta">
+      <strong>Holdings Analysis</strong>
+      <span id="header-date">Upload positions to begin</span>
+    </div>
+    <button class="reset-btn" id="reset-btn" style="display:none">↻ Reset</button>
+  </div>
+</header>
+
+<!-- UPLOAD SCREEN -->
+<div id="upload-screen" class="upload-screen">
+  <h1 class="upload-headline">See what you <em>actually</em> own — across every account.</h1>
+  <p class="upload-sub">
+    Upload positions exports from your brokers and we'll consolidate, look through funds to underlying holdings,
+    surface hidden overlap, and total your fee drag. Your data stays in your browser.
+  </p>
+
+  <label class="drop-zone" id="drop-zone">
+    <div class="drop-zone-icon">⤴</div>
+    <div class="drop-zone-text">Drop CSV files here or click to browse</div>
+    <div class="drop-zone-sub">Multiple files supported · One per account</div>
+    <input type="file" id="file-input" accept=".csv,.tsv,.txt" multiple style="display:none">
+  </label>
+
+  <div class="upload-actions">
+    <button class="text-link" id="demo-btn">→ Try with sample data</button>
+    <button class="text-link" id="sample-csv-btn">↓ Download sample CSV</button>
+  </div>
+
+  <div class="formats-info">
+    <strong style="color: var(--ink-dim)">Auto-detected formats:</strong>
+    Schwab Positions Export, Fidelity Positions Export, Vanguard Holdings Export, and generic
+    <code>account, ticker, shares, price</code> CSVs. Each file becomes one account; the filename
+    is used as the account name unless an Account column is present.
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none">
+  <div id="warn-banner-host"></div>
+
+  <section><div class="hero" id="hero"></div></section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2 class="section-title">The Look-Through</h2>
+      <span class="section-sub">What you actually own</span>
+    </div>
+    <div class="xray-callout" id="xray-callout"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Consolidated Holdings</h2>
+      <span class="section-sub">Across all accounts, as reported</span>
+    </div>
+    <div class="accounts-grid" id="accounts-grid"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Sector Exposure</h2>
+      <span class="section-sub">Computed via fund look-through, dollar-weighted</span>
+    </div>
+    <div class="donut-row">
+      <svg class="donut-svg" id="sector-donut" viewBox="0 0 100 100"></svg>
+      <div class="bar-list" id="sector-bars"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2 class="section-title">Geographic Exposure</h2>
+      <span class="section-sub">Country weightings after look-through</span>
+    </div>
+    <div class="donut-row">
+      <svg class="donut-svg" id="country-donut" viewBox="0 0 100 100"></svg>
+      <div class="bar-list" id="country-bars"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Hidden Overlap</h2>
+      <span class="section-sub">Stocks held through multiple funds — concentration you may not realize</span>
+    </div>
+    <div id="overlap-host"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">06</span>
+      <h2 class="section-title">Top 15 Effective Holdings</h2>
+      <span class="section-sub">Ranked by total dollar exposure after look-through</span>
+    </div>
+    <div class="top-holdings head">
+      <div></div><div>Ticker</div><div>Name</div><div>Value</div><div>Weight</div>
+    </div>
+    <div id="top-holdings-list"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">07</span>
+      <h2 class="section-title">Fee Analysis</h2>
+      <span class="section-sub">Expense ratios on funds you hold</span>
+    </div>
+    <div id="fees-host"></div>
+  </section>
+
+  <footer>
+    <em>Your portfolio is stored only in this browser.</em><br>
+    ETF/fund metadata uses approximate published values.
+    <a href="https://github.com/" target="_blank">View source on GitHub</a>
+  </footer>
+</div>
+
+<!-- CLASSIFY MODAL -->
+<div class="modal" id="classify-modal">
+  <div class="modal-card">
+    <h3 class="modal-title">Classify ticker</h3>
+    <p class="modal-sub">This security isn't in the built-in database. Add classification to include it in sector, country, and fee analysis. Your custom tickers are saved to your browser only.</p>
+
+    <div class="modal-field">
+      <label class="modal-label">Ticker</label>
+      <input type="text" class="modal-input" id="classify-ticker" readonly>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Name</label>
+      <input type="text" class="modal-input" id="classify-name" placeholder="e.g. Some Company Inc.">
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label class="modal-label">Type</label>
+        <select class="modal-select" id="classify-type">
+          <option>Stock</option>
+          <option>Fund</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Expense Ratio (%)</label>
+        <input type="number" class="modal-input" id="classify-er" step="0.01" placeholder="0.00">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label class="modal-label">Sector</label>
+        <select class="modal-select" id="classify-sector">
+          <option>Tech</option>
+          <option>Financials</option>
+          <option>Healthcare</option>
+          <option>Cons. Discretionary</option>
+          <option>Cons. Staples</option>
+          <option>Comm. Services</option>
+          <option>Industrials</option>
+          <option>Energy</option>
+          <option>Materials</option>
+          <option>Utilities</option>
+          <option>Real Estate</option>
+          <option>Bonds</option>
+          <option>Commodities</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Country</label>
+        <select class="modal-select" id="classify-country">
+          <option>United States</option>
+          <option>United Kingdom</option>
+          <option>Japan</option>
+          <option>China</option>
+          <option>Germany</option>
+          <option>France</option>
+          <option>Switzerland</option>
+          <option>Canada</option>
+          <option>Australia</option>
+          <option>India</option>
+          <option>Taiwan</option>
+          <option>South Korea</option>
+          <option>Netherlands</option>
+          <option>Brazil</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="classify-cancel">Cancel</button>
+      <button class="btn-primary" id="classify-submit">Save</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+"Account Number","Account Name","Symbol","Description","Quantity","Last Price","Current Value","Cost Basis"
+"X12345678","ROLLOVER IRA","FXAIX","FIDELITY 500 INDEX FUND","1200","$215.30","$258,360.00","$220,000.00"
+"X12345678","ROLLOVER IRA","FTIHX","FIDELITY TOTAL INTL INDEX","2000","$14.55","$29,100.00","$26,000.00"
+"X12345678","ROLLOVER IRA","QQQ","INVESCO QQQ TRUST","35","$665.40","$23,289.00","$20,000.00"
