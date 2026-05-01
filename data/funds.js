@@ -73,4 +73,14 @@ export const FUNDS = {
   "IYR":   { name: "iShares US Real Estate ETF",         er: 0.0039,  profile: "REIT_US" },
   "GLD":   { name: "SPDR Gold Trust",                    er: 0.0040,  profile: "GOLD" },
   "IAU":   { name: "iShares Gold Trust",                 er: 0.0025,  profile: "GOLD" },
+
+  // ====== Money Market / Cash equivalents ======
+  "SNOXX": { name: "Schwab Treasury Obligations Money Fund", er: 0.0034, profile: "MONEY_MARKET" },
+  "SPAXX": { name: "Fidelity Government Money Market Fund",  er: 0.0042, profile: "MONEY_MARKET" },
+  "VMFXX": { name: "Vanguard Federal Money Market Fund",     er: 0.0011, profile: "MONEY_MARKET" },
+  "FDRXX": { name: "Fidelity Government Cash Reserves",      er: 0.0038, profile: "MONEY_MARKET" },
+
+  // ====== Active Small/Mid-Cap Funds ======
+  "GMAYX": { name: "GMO Small Cap Quality Fund",         er: 0.0075, profile: "US_SMALL_GROWTH" },
+  "HRNOX": { name: "Hood River New Opportunities Inst",  er: 0.0095, profile: "US_SMALL_GROWTH" },
 };
