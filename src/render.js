@@ -26,14 +26,38 @@ export function renderWarnings(accounts, onClassify) {
       <div class="warn-icon">⚠</div>
       <div class="warn-content">
         <strong>${unknowns.length} unrecognized ticker${unknowns.length>1?"s":""}:</strong>
-        ${unknowns.map(t => `<button class="ticker-pill" data-ticker="${t}">${t}</button>`).join(" ")}
-        <br>Click any ticker to manually classify it. Unclassified positions are included in totals but excluded from sector/country breakdowns.
+        ${unknowns.map(t => `<button class="ticker-pill" id="pill-${t.replace(/[^A-Z0-9]/g,"_")}" data-ticker="${t}" title="Click to classify manually">${t}</button>`).join(" ")}
+        <br>If a Worker is configured, these will auto-enrich. Otherwise click any ticker to classify it manually.
       </div>
     </div>
   `;
   host.querySelectorAll(".ticker-pill").forEach(btn => {
     btn.addEventListener("click", () => onClassify(btn.dataset.ticker));
   });
+}
+
+/**
+ * Update a single ticker pill's visual state during async enrichment.
+ * Called from app.js as enrichment results come back.
+ *   status: "pending" | "found" | "failed"
+ *   data:   the result object (used for tooltip on found)
+ */
+export function setEnrichmentStatus(ticker, status, data) {
+  const id = `pill-${ticker.replace(/[^A-Z0-9]/g,"_")}`;
+  const pill = document.getElementById(id);
+  if (!pill) return;
+  pill.classList.remove("pending", "found", "failed");
+  pill.classList.add(status);
+  if (status === "pending") {
+    pill.innerHTML = `${ticker} <span class="pill-spinner">…</span>`;
+    pill.title = "Looking up…";
+  } else if (status === "found" && data) {
+    pill.innerHTML = `${ticker} <span class="pill-check">✓</span>`;
+    pill.title = `Auto-classified: ${data.name} · ${data.sector} · ${data.country}`;
+  } else if (status === "failed") {
+    pill.innerHTML = ticker;
+    pill.title = "Auto-lookup failed — click to classify manually";
+  }
 }
 
 export function renderHero(accounts) {

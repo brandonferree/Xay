@@ -1,12 +1,15 @@
 // src/app.js
-// Main entry point. Wires up upload flow, dashboard, and ticker classification.
+// Main entry point. Wires up upload flow, dashboard, ticker classification,
+// and Worker-based auto-enrichment.
 
 import { parseCSVFile, buildAccountsFromUploads } from "./parser.js";
-import { renderAll } from "./render.js";
+import { renderAll, setEnrichmentStatus } from "./render.js";
 import {
   savePortfolio, loadPortfolio, getPortfolioMeta, clearPortfolio,
   saveUserTicker
 } from "./storage.js";
+import { findUnknownTickers } from "./calculations.js";
+import { isEnrichmentAvailable, enrichBatch } from "./enrich.js";
 
 // ============================================================
 // SAMPLE PORTFOLIO (for demo button)
@@ -34,6 +37,29 @@ const SAMPLE_ACCOUNTS = [
 let ACCOUNTS = [];
 
 // ============================================================
+// AUTO-ENRICHMENT
+// ============================================================
+async function runAutoEnrichment() {
+  if (!isEnrichmentAvailable()) return;
+  const unknowns = findUnknownTickers(ACCOUNTS);
+  if (unknowns.length === 0) return;
+
+  // Mark all as pending in the warning banner immediately
+  unknowns.forEach(t => setEnrichmentStatus(t, "pending"));
+
+  await enrichBatch(unknowns, (ticker, result) => {
+    if (result.found) {
+      setEnrichmentStatus(ticker, "found", result);
+    } else {
+      setEnrichmentStatus(ticker, "failed", result);
+    }
+  });
+
+  // After enrichment completes, full re-render so the dashboard reflects new classifications
+  renderAll(ACCOUNTS, openClassifyModal);
+}
+
+// ============================================================
 // FLOW / MODE
 // ============================================================
 function showDashboard() {
@@ -47,6 +73,8 @@ function showDashboard() {
   }
   renderAll(ACCOUNTS, openClassifyModal);
   window.scrollTo(0, 0);
+  // Fire enrichment in the background (non-blocking)
+  runAutoEnrichment();
 }
 
 function showUpload() {
