@@ -44,6 +44,8 @@ export async function enrichTicker(ticker) {
         country: data.country,
         type: data.type,
         er: data.er || 0,
+        isFund: data.isFund || false,
+        fundCategory: data.fundCategory || null,
       });
     }
     return data;
