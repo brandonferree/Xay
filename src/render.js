@@ -240,6 +240,7 @@ export function renderTopHoldings(accounts) {
   const total = getTotalValue(accounts);
   const lookthrough = calcLookThrough(accounts);
   const all = Object.entries(lookthrough)
+    .filter(([k]) => !isBucketTicker(k))   // exclude "Other US Equities" etc. — show real names only
     .map(([k, v]) => ({ ticker: k, value: v.value, pct: v.value / total }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 15);
